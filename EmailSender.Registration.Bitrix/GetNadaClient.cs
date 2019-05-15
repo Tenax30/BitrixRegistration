@@ -1,8 +1,6 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -27,30 +25,23 @@ namespace EmailSender.Registration.Bitrix
 
                 /* Проверка адреса */
 
-                try
-                {
 
-                    Uri uri = new Uri("https://getnada.com/api/v1/inboxes/" + email);
+                Uri uri = new Uri("https://getnada.com/api/v1/inboxes/" + email);
 
-                    HttpResponseMessage response = await _httpClient.GetAsync(uri);
+                HttpResponseMessage response = await _httpClient.GetAsync(uri);
 
-                    string responseString = await response.Content.ReadAsStringAsync();
+                string responseString = await response.Content.ReadAsStringAsync();
 
-                    JObject jsonResponce = JObject.Parse(responseString);
+                JObject jsonResponce = JObject.Parse(responseString);
 
-                    JToken errorJToken = new JObject();
+                JToken errorJToken = new JObject();
 
-                    if (!jsonResponce.TryGetValue("error", out errorJToken))
-                        return email;
+                if (!jsonResponce.TryGetValue("error", out errorJToken))
+                    return email;
 
-                }
-                catch (HttpRequestException)
-                {
-                    return null;
-                }
 
             } while (true);
-           
+
         }
 
         public async Task<Message[]> GetMessagesAsync(string address, DateTime from)
@@ -67,48 +58,39 @@ namespace EmailSender.Registration.Bitrix
             {
                 newMessages = await CheckNewMessagesAsync(address, from);
 
-                if(newMessages == false)
+                if (newMessages == false)
                 {
                     await Task.Delay(TIMEOUT_STEP);
                     timeout_Total += TIMEOUT_STEP;
                     if (timeout_Total > TIMEOUT_MAX)
-                        return null;
+                        throw new NewMessagesTimeoutException();
                 }
-                    
+
             } while (newMessages == false);
 
             /* Получение писем */
 
             List<Message> messages = new List<Message>();
 
-            try
+            Uri uri = new Uri("https://getnada.com/api/v1/inboxes/" + address);
+
+            HttpResponseMessage response = await _httpClient.GetAsync(uri);
+
+            string responseString = await response.Content.ReadAsStringAsync();
+
+            JObject jsonResponce = JObject.Parse(responseString);
+
+            JArray jArrayMessages = (JArray)jsonResponce["msgs"];
+
+            for (int i = 0; i < jArrayMessages.Count; i++)
             {
-                Uri uri = new Uri("https://getnada.com/api/v1/inboxes/" + address);
+                string uid = jArrayMessages[i]["uid"].ToString();
 
-                HttpResponseMessage response = await _httpClient.GetAsync(uri);
-
-                string responseString = await response.Content.ReadAsStringAsync();
-
-                JObject jsonResponce = JObject.Parse(responseString);
-
-                JArray jArrayMessages = (JArray)jsonResponce["msgs"];
-
-                for (int i = 0; i < jArrayMessages.Count; i++)
-                {
-                    string uid = jArrayMessages[i]["uid"].ToString();
-
-                    Message message = await GetCurrentMessageAsync(uid);
-                    messages.Add(message);
-                }
-
-                return messages.ToArray();
+                Message message = await GetCurrentMessageAsync(uid);
+                messages.Add(message);
             }
 
-            catch(HttpRequestException)
-            {
-                return null;
-            }
-           
+            return messages.ToArray();
         }
 
         private string GenerateNewEmailAdress()
@@ -127,57 +109,44 @@ namespace EmailSender.Registration.Bitrix
             return "q" + intervalMilliseconds + rnd.Next((int)10e+6) + "@getnada.com";
         }
 
-        private async Task<bool> CheckNewMessagesAsync(string address, DateTime from) {
+        private async Task<bool> CheckNewMessagesAsync(string address, DateTime from)
+        {
 
             long unixTime = ((DateTimeOffset)from).ToUnixTimeSeconds();
 
-            try
-            {
-                Uri uri = new Uri("https://getnada.com/api/v1/u/" + address + "/" + unixTime);
+            Uri uri = new Uri("https://getnada.com/api/v1/u/" + address + "/" + unixTime);
 
-                HttpResponseMessage response = await _httpClient.GetAsync(uri);
+            HttpResponseMessage response = await _httpClient.GetAsync(uri);
 
-                string responseString = await response.Content.ReadAsStringAsync();
+            string responseString = await response.Content.ReadAsStringAsync();
 
-                JObject jsonResponce = JObject.Parse(responseString);
+            JObject jsonResponce = JObject.Parse(responseString);
 
-                if (jsonResponce["new"].Value<bool>() == true)
-                    return true;
-                else
-                    return false;
-            }
-            catch(HttpRequestException)
-            {
+            if (jsonResponce["new"].Value<bool>() == true)
+                return true;
+            else
                 return false;
-            } 
         }
 
         private async Task<Message> GetCurrentMessageAsync(string uid)
         {
-            try
+            Uri uri = new Uri("https://getnada.com/api/v1/messages/" + uid);
+
+            HttpResponseMessage response = await _httpClient.GetAsync(uri);
+
+            string responseString = await response.Content.ReadAsStringAsync();
+
+            JObject jsonResponce = JObject.Parse(responseString);
+
+            Message message = new Message
             {
-                Uri uri = new Uri("https://getnada.com/api/v1/messages/" + uid);
+                From = jsonResponce["f"].ToString(),
+                Subject = jsonResponce["s"].ToString(),
+                TextBody = jsonResponce["text"].ToString(),
+                HtmlBody = jsonResponce["html"].ToString()
+            };
 
-                HttpResponseMessage response = await _httpClient.GetAsync(uri);
-
-                string responseString = await response.Content.ReadAsStringAsync();
-
-                JObject jsonResponce = JObject.Parse(responseString);
-
-                Message message = new Message
-                {
-                    From = jsonResponce["f"].ToString(),
-                    Subject = jsonResponce["s"].ToString(),
-                    TextBody = jsonResponce["text"].ToString(),
-                    HtmlBody = jsonResponce["html"].ToString()
-                };
-
-                return message;
-            }
-            catch(HttpRequestException)
-            {
-                return null;
-            }
+            return message;
         }
     }
 }

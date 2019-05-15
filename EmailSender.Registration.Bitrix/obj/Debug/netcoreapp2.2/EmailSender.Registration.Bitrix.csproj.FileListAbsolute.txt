@@ -25,3 +25,12 @@ C:\Users\Admin\Desktop\EmailSender.Registration.Bitrix\EmailSender.Registration.
 C:\Users\Admin\Desktop\EmailSender.Registration.Bitrix\EmailSender.Registration.Bitrix\obj\Debug\netcoreapp2.2\EmailSender.Registration.Bitrix.AssemblyInfo.cs
 C:\Users\Admin\Desktop\EmailSender.Registration.Bitrix\EmailSender.Registration.Bitrix\obj\Debug\netcoreapp2.2\EmailSender.Registration.Bitrix.dll
 C:\Users\Admin\Desktop\EmailSender.Registration.Bitrix\EmailSender.Registration.Bitrix\obj\Debug\netcoreapp2.2\EmailSender.Registration.Bitrix.pdb
+C:\Users\Admin\Desktop\EmailSender.Registration.Bitrix_v2\EmailSender.Registration.Bitrix\bin\Debug\netcoreapp2.2\EmailSender.Registration.Bitrix.deps.json
+C:\Users\Admin\Desktop\EmailSender.Registration.Bitrix_v2\EmailSender.Registration.Bitrix\bin\Debug\netcoreapp2.2\EmailSender.Registration.Bitrix.dll
+C:\Users\Admin\Desktop\EmailSender.Registration.Bitrix_v2\EmailSender.Registration.Bitrix\bin\Debug\netcoreapp2.2\EmailSender.Registration.Bitrix.pdb
+C:\Users\Admin\Desktop\EmailSender.Registration.Bitrix_v2\EmailSender.Registration.Bitrix\obj\Debug\netcoreapp2.2\EmailSender.Registration.Bitrix.csprojAssemblyReference.cache
+C:\Users\Admin\Desktop\EmailSender.Registration.Bitrix_v2\EmailSender.Registration.Bitrix\obj\Debug\netcoreapp2.2\EmailSender.Registration.Bitrix.csproj.CoreCompileInputs.cache
+C:\Users\Admin\Desktop\EmailSender.Registration.Bitrix_v2\EmailSender.Registration.Bitrix\obj\Debug\netcoreapp2.2\EmailSender.Registration.Bitrix.AssemblyInfoInputs.cache
+C:\Users\Admin\Desktop\EmailSender.Registration.Bitrix_v2\EmailSender.Registration.Bitrix\obj\Debug\netcoreapp2.2\EmailSender.Registration.Bitrix.AssemblyInfo.cs
+C:\Users\Admin\Desktop\EmailSender.Registration.Bitrix_v2\EmailSender.Registration.Bitrix\obj\Debug\netcoreapp2.2\EmailSender.Registration.Bitrix.dll
+C:\Users\Admin\Desktop\EmailSender.Registration.Bitrix_v2\EmailSender.Registration.Bitrix\obj\Debug\netcoreapp2.2\EmailSender.Registration.Bitrix.pdb

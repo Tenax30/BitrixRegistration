@@ -2,10 +2,8 @@ using AngleSharp.Html.Parser;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -47,14 +45,23 @@ namespace EmailSender.Registration.Bitrix
                     continue;
                 }
                     
-
                 const int TIMEOUT_MAX = 50000;
                 const int TIMEOUT_STEP = 5000;
 
                 //Попытка получить решение задачи (токен)
                 for (int timeOutTotal = 0; timeOutTotal < TIMEOUT_MAX; timeOutTotal += TIMEOUT_STEP)
                 {
-                    captchaToken = await GetCaptchaTokenAsync(antiGateTaskId);
+                    try
+                    {
+                        captchaToken = await GetCaptchaTokenAsync(antiGateTaskId);
+                    }
+                    catch(UnsolvedCaptchaException ex)
+                    {
+                        if (ex.ErrorId == (int)UnsolvedCaptchaException.ErrorIds.INVALID_CAPTCHA_SOLVE)
+                            break;
+                        else
+                            throw new AntiGateException(ex.ErrorMessage);
+                    }
 
                     if (captchaToken != null)
                         break;
@@ -67,7 +74,11 @@ namespace EmailSender.Registration.Bitrix
             }
 
             if (captchaToken == null)
-                return null;
+            {
+                const string errorMessage = "Captcha solution time exceeded";
+                throw new AntiGateException(errorMessage);
+            }
+                
 
             /* Формирование данны для регистрации */
 
@@ -98,7 +109,7 @@ namespace EmailSender.Registration.Bitrix
             JObject jsonResponce = JObject.Parse(responseString);
 
             if (jsonResponce["status"].Value<string>() == "error")
-                return null;
+                throw new BitrixRegistrationException();
 
             /* Парсинг сообщения */
 
@@ -116,30 +127,13 @@ namespace EmailSender.Registration.Bitrix
 
                     RegistrationResult registrationResult = new RegistrationResult(bitrixEntrance, email, password);
 
-                    const int TIMEOUT_MAX = 25000;
-                    const int TIMEOUT_STEP = 5000;
-                    int timeout_Total = 0;
-
-                    bool isLoginConfirm;
-
-                    do
-                    {
-                        isLoginConfirm = await ConfirmBitrixEmailAsync(confirmationLink);
-                        if(!isLoginConfirm)
-                        {
-                            await Task.Delay(TIMEOUT_STEP);
-                            timeout_Total += TIMEOUT_STEP;
-
-                            if (timeout_Total > TIMEOUT_MAX)
-                                return null;
-                        }
-                    } while (!isLoginConfirm);
+                    await ConfirmBitrixEmailAsync(confirmationLink);
                     
                     return registrationResult;
                 }
             }
 
-            return null;
+            throw new BitrixRegistrationException();
         }
 
         private async Task<string> SendCaptchaToAntiCaptchaAsync()
@@ -161,26 +155,19 @@ namespace EmailSender.Registration.Bitrix
                 "}" +
             "}";
 
-            try
-            {
-                    Uri uri = new Uri("https://api.anti-captcha.com/createTask");
-                    StringContent content = new StringContent(data, Encoding.UTF8, "application/json");
+            Uri uri = new Uri("https://api.anti-captcha.com/createTask");
+            StringContent content = new StringContent(data, Encoding.UTF8, "application/json");
 
-                    var responce = await _httpClient.PostAsync(uri, content);
+            var responce = await _httpClient.PostAsync(uri, content);
 
-                    string responseString = await responce.Content.ReadAsStringAsync();
+            string responseString = await responce.Content.ReadAsStringAsync();
 
-                    JObject jsonResponce = JObject.Parse(responseString);
+            JObject jsonResponce = JObject.Parse(responseString);
 
-                    if (jsonResponce["errorId"].Value<int>() == 0)
-                        return jsonResponce["taskId"].ToString();
-                    else
-                        return null;
-            }
-            catch (HttpRequestException)
-            {
+            if (jsonResponce["errorId"].Value<int>() == 0)
+                return jsonResponce["taskId"].ToString();
+            else
                 return null;
-            }
         }
 
         private async Task<string> GetCaptchaTokenAsync(string taskId)
@@ -190,77 +177,60 @@ namespace EmailSender.Registration.Bitrix
                 "\"taskId\":" + taskId +
             "}";
 
-            try
+            Uri uri = new Uri("https://api.anti-captcha.com/getTaskResult");
+            StringContent content = new StringContent(data, Encoding.UTF8, "application/json");
+
+            var responce = await _httpClient.PostAsync(uri, content);
+
+            string responseString = await responce.Content.ReadAsStringAsync();
+
+            JObject jsonResponce = JObject.Parse(responseString);
+
+            JToken errorJToken = new JObject();
+
+            if (!jsonResponce.TryGetValue("status", out errorJToken))
             {
-                Uri uri = new Uri("https://api.anti-captcha.com/getTaskResult");
-                StringContent content = new StringContent(data, Encoding.UTF8, "application/json");
-
-                var responce = await _httpClient.PostAsync(uri, content);
-
-                string responseString = await responce.Content.ReadAsStringAsync();
-
-                JObject jsonResponce = JObject.Parse(responseString);
-
-                JToken errorJToken = new JObject();
-
-                if (!jsonResponce.TryGetValue("status", out errorJToken) ||
-                    jsonResponce["status"].ToString() != "ready")
-                    return null;
-                else
-                    return jsonResponce["solution"]["gRecaptchaResponse"].ToString();
-
+                int errorId = jsonResponce["errorId"].Value<int>();
+                string errorMessage = jsonResponce["errorDescription"].Value<string>();
+                throw new UnsolvedCaptchaException(errorId, errorMessage);
             }
-            catch (HttpRequestException)
-            {
+                
+
+            if (jsonResponce["status"].ToString() != "ready")
                 return null;
-            }
+            else
+                return jsonResponce["solution"]["gRecaptchaResponse"].ToString();
+
         }
 
         private async Task<string> GetBitrixSessidAsync()
         {
-            try
+            Uri uri = new Uri("https://auth2.bitrix24.net/create/");
+
+            HttpResponseMessage response = await _httpClient.GetAsync(uri);
+
+            string responseString = await response.Content.ReadAsStringAsync();
+
+            List<char> sessidList = new List<char>();
+
+            int sessidStartIndex = responseString.IndexOf("ssid':'") + "ssid':'".Length;
+
+            char currentSymbol = responseString[sessidStartIndex];
+
+            for (int i = sessidStartIndex + 1; currentSymbol != '\''; i++)
             {
-                    Uri uri = new Uri("https://auth2.bitrix24.net/create/");
-
-                    HttpResponseMessage response = await _httpClient.GetAsync(uri);
-
-                    string responseString = await response.Content.ReadAsStringAsync();
-
-                    List<char> sessidList = new List<char>();
-
-                    int sessidStartIndex = responseString.IndexOf("ssid':'") + "ssid':'".Length;
-
-                    char currentSymbol = responseString[sessidStartIndex];
-
-                    for (int i = sessidStartIndex + 1; currentSymbol != '\''; i++)
-                    {
-                        sessidList.Add(currentSymbol);
-                        currentSymbol = responseString[i];
-                    }
-
-                    return new string(sessidList.ToArray());
+                sessidList.Add(currentSymbol);
+                currentSymbol = responseString[i];
             }
 
-            catch(HttpRequestException)
-            {
-                return null;
-            }
+            return new string(sessidList.ToArray());
         }
 
-        private async Task<bool> ConfirmBitrixEmailAsync(string confirmationLink)
+        private async Task ConfirmBitrixEmailAsync(string confirmationLink)
         {
-            try
-            {
-                Uri uri = new Uri(confirmationLink);
+            Uri uri = new Uri(confirmationLink);
 
-                HttpResponseMessage response = await _httpClient.GetAsync(uri);
-
-                return true;
-            }
-            catch(HttpRequestException)
-            {
-                return false;
-            }
+            HttpResponseMessage response = await _httpClient.GetAsync(uri);
         }
 
         private void ParseBitrixMessage(Message message, out string bitrixEntrance, out string confirmationLink, out string password)

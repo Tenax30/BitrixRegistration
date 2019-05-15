@@ -863,11 +863,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Admin\\Desktop\\EmailSender.Registration.Bitrix\\EmailSender.Registration.Bitrix\\EmailSender.Registration.Bitrix.csproj",
+      "projectUniqueName": "D:\\Program Files\\Git\\EmailSender.Registration.Bitrix\\EmailSender.Registration.Bitrix\\EmailSender.Registration.Bitrix.csproj",
       "projectName": "EmailSender.Registration.Bitrix",
-      "projectPath": "C:\\Users\\Admin\\Desktop\\EmailSender.Registration.Bitrix\\EmailSender.Registration.Bitrix\\EmailSender.Registration.Bitrix.csproj",
+      "projectPath": "D:\\Program Files\\Git\\EmailSender.Registration.Bitrix\\EmailSender.Registration.Bitrix\\EmailSender.Registration.Bitrix.csproj",
       "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Admin\\Desktop\\EmailSender.Registration.Bitrix\\EmailSender.Registration.Bitrix\\obj\\",
+      "outputPath": "D:\\Program Files\\Git\\EmailSender.Registration.Bitrix\\EmailSender.Registration.Bitrix\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
