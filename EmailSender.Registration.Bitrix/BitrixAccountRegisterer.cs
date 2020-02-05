@@ -27,7 +27,6 @@ namespace EmailSender.Registration.Bitrix
 
         public async Task<RegistrationResult> RegisterAsync()
         { 
-            /* Ðåøåíèå êàï÷è */
             const int MAX_CREATED_TASKS = 3;
             const int TASK_TIMOUT_STEP = 5000;
 
@@ -35,8 +34,6 @@ namespace EmailSender.Registration.Bitrix
 
             for (int createdTasksCount = 0; createdTasksCount < MAX_CREATED_TASKS; createdTasksCount++)
             {
-                
-                //Ïîëó÷åíèå çàäà÷è Àíòèãåéò
                 string antiGateTaskId = await SendCaptchaToAntiCaptchaAsync();
 
                 if (antiGateTaskId == null)
@@ -48,7 +45,6 @@ namespace EmailSender.Registration.Bitrix
                 const int TIMEOUT_MAX = 50000;
                 const int TIMEOUT_STEP = 5000;
 
-                //Ïîïûòêà ïîëó÷èòü ðåøåíèå çàäà÷è (òîêåí)
                 for (int timeOutTotal = 0; timeOutTotal < TIMEOUT_MAX; timeOutTotal += TIMEOUT_STEP)
                 {
                     try
@@ -78,9 +74,6 @@ namespace EmailSender.Registration.Bitrix
                 const string errorMessage = "Captcha solution time exceeded";
                 throw new AntiGateException(errorMessage);
             }
-                
-
-            /* Ôîðìèðîâàíèå äàííû äëÿ ðåãèñòðàöèè */
 
             string email = await _getNadaClient.GetRandomEmailAddressAsync();
             int email_agree_news = 0;
@@ -97,8 +90,6 @@ namespace EmailSender.Registration.Bitrix
                 "sessid=" + sessid + "&" +
                 "SITE_ID=" + SITE_ID;
 
-            /* Çàïðîñ íà ðåãèñòðàöèþ â Áèòðèêñ */
-
             Uri uri = new Uri("https://auth2.bitrix24.net/bitrix/services/main/ajax.php?action=b24network.create.register");
             StringContent content = new StringContent(data, Encoding.UTF8, "application/x-www-form-urlencoded");
 
@@ -111,13 +102,11 @@ namespace EmailSender.Registration.Bitrix
             if (jsonResponce["status"].Value<string>() == "error")
                 throw new BitrixRegistrationException();
 
-            /* Ïàðñèíã ñîîáùåíèÿ */
-
             Message[] messages = await _getNadaClient.GetMessagesAsync(email, DateTime.Today);
 
             for(int i = 0; i < messages.Length; i++)
             {
-                if(messages[i].From == "Áèòðèêñ24")
+                if(messages[i].From == "Битрикс24")
                 {
                     string bitrixEntrance;
                     string confirmationLink;
@@ -237,7 +226,7 @@ namespace EmailSender.Registration.Bitrix
         {
             List<char> passwordList = new List<char>();
 
-            int passwordStartIndex = message.TextBody.IndexOf("Ïàðîëü: ") + "Ïàðîëü: ".Length;
+            int passwordStartIndex = message.TextBody.IndexOf("Пароль: ") + "Пароль: ".Length;
 
             char currentSymbol = message.TextBody[passwordStartIndex];
 
