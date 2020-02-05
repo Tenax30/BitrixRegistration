@@ -27,7 +27,7 @@ namespace EmailSender.Registration.Bitrix
 
         public async Task<RegistrationResult> RegisterAsync()
         { 
-            /* Решение капчи */
+            /* ГђГҐГёГҐГ­ГЁГҐ ГЄГ ГЇГ·ГЁ */
             const int MAX_CREATED_TASKS = 3;
             const int TASK_TIMOUT_STEP = 5000;
 
@@ -36,7 +36,7 @@ namespace EmailSender.Registration.Bitrix
             for (int createdTasksCount = 0; createdTasksCount < MAX_CREATED_TASKS; createdTasksCount++)
             {
                 
-                //Получение задачи Антигейт
+                //ГЏГ®Г«ГіГ·ГҐГ­ГЁГҐ Г§Г Г¤Г Г·ГЁ ГЂГ­ГІГЁГЈГҐГ©ГІ
                 string antiGateTaskId = await SendCaptchaToAntiCaptchaAsync();
 
                 if (antiGateTaskId == null)
@@ -48,7 +48,7 @@ namespace EmailSender.Registration.Bitrix
                 const int TIMEOUT_MAX = 50000;
                 const int TIMEOUT_STEP = 5000;
 
-                //Попытка получить решение задачи (токен)
+                //ГЏГ®ГЇГ»ГІГЄГ  ГЇГ®Г«ГіГ·ГЁГІГј Г°ГҐГёГҐГ­ГЁГҐ Г§Г Г¤Г Г·ГЁ (ГІГ®ГЄГҐГ­)
                 for (int timeOutTotal = 0; timeOutTotal < TIMEOUT_MAX; timeOutTotal += TIMEOUT_STEP)
                 {
                     try
@@ -80,7 +80,7 @@ namespace EmailSender.Registration.Bitrix
             }
                 
 
-            /* Формирование данны для регистрации */
+            /* Г”Г®Г°Г¬ГЁГ°Г®ГўГ Г­ГЁГҐ Г¤Г Г­Г­Г» Г¤Г«Гї Г°ГҐГЈГЁГ±ГІГ°Г Г¶ГЁГЁ */
 
             string email = await _getNadaClient.GetRandomEmailAddressAsync();
             int email_agree_news = 0;
@@ -97,7 +97,7 @@ namespace EmailSender.Registration.Bitrix
                 "sessid=" + sessid + "&" +
                 "SITE_ID=" + SITE_ID;
 
-            /* Запрос на регистрацию в Битрикс */
+            /* Г‡Г ГЇГ°Г®Г± Г­Г  Г°ГҐГЈГЁГ±ГІГ°Г Г¶ГЁГѕ Гў ГЃГЁГІГ°ГЁГЄГ± */
 
             Uri uri = new Uri("https://auth2.bitrix24.net/bitrix/services/main/ajax.php?action=b24network.create.register");
             StringContent content = new StringContent(data, Encoding.UTF8, "application/x-www-form-urlencoded");
@@ -111,13 +111,13 @@ namespace EmailSender.Registration.Bitrix
             if (jsonResponce["status"].Value<string>() == "error")
                 throw new BitrixRegistrationException();
 
-            /* Парсинг сообщения */
+            /* ГЏГ Г°Г±ГЁГ­ГЈ Г±Г®Г®ГЎГ№ГҐГ­ГЁГї */
 
             Message[] messages = await _getNadaClient.GetMessagesAsync(email, DateTime.Today);
 
             for(int i = 0; i < messages.Length; i++)
             {
-                if(messages[i].From == "Битрикс24")
+                if(messages[i].From == "ГЃГЁГІГ°ГЁГЄГ±24")
                 {
                     string bitrixEntrance;
                     string confirmationLink;
@@ -141,7 +141,7 @@ namespace EmailSender.Registration.Bitrix
             NetworkCredential proxyCredential = (NetworkCredential)((WebProxy)_proxy).Credentials;
 
             string data = "{" +
-                "\"clientKey\":\"689da824473446ba9152583268d850b7\"," +
+                "\"clientKey\":\"***\"," +
                 "\"task\": {" +
                     "\"type\": \"NoCaptchaTask\"," +
                     "\"websiteURL\":\"https://auth2.bitrix24.net/create/\"," +
@@ -173,7 +173,7 @@ namespace EmailSender.Registration.Bitrix
         private async Task<string> GetCaptchaTokenAsync(string taskId)
         {
             string data = "{" +
-                "\"clientKey\":\"689da824473446ba9152583268d850b7\"," +
+                "\"clientKey\":\"***\"," +
                 "\"taskId\":" + taskId +
             "}";
 
@@ -237,7 +237,7 @@ namespace EmailSender.Registration.Bitrix
         {
             List<char> passwordList = new List<char>();
 
-            int passwordStartIndex = message.TextBody.IndexOf("Пароль: ") + "Пароль: ".Length;
+            int passwordStartIndex = message.TextBody.IndexOf("ГЏГ Г°Г®Г«Гј: ") + "ГЏГ Г°Г®Г«Гј: ".Length;
 
             char currentSymbol = message.TextBody[passwordStartIndex];
 
