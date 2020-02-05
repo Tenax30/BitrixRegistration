@@ -19,12 +19,7 @@ namespace EmailSender.Registration.Bitrix
         {
             do
             {
-                /* Генерация нового почтового адреса */
-
                 string email = GenerateNewEmailAdress();
-
-                /* Проверка адреса */
-
 
                 Uri uri = new Uri("https://getnada.com/api/v1/inboxes/" + email);
 
@@ -46,8 +41,6 @@ namespace EmailSender.Registration.Bitrix
 
         public async Task<Message[]> GetMessagesAsync(string address, DateTime from)
         {
-            /* Проверка новых писем */
-
             bool newMessages;
 
             const int TIMEOUT_STEP = 2000;
@@ -67,8 +60,6 @@ namespace EmailSender.Registration.Bitrix
                 }
 
             } while (newMessages == false);
-
-            /* Получение писем */
 
             List<Message> messages = new List<Message>();
 
